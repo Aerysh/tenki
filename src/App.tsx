@@ -1,125 +1,86 @@
-import { useState } from "react";
-import {
-  Button,
-  Container,
-  Content,
-  Divider,
-  Form,
-  Heading,
-  HStack,
-  Panel,
-  Stack,
-  Text,
-  VStack,
-} from "rsuite";
-import { fetchWeatherApi } from "openmeteo";
+import { useState } from 'react';
+import { Container, Divider, Panel, Stack, Text } from 'rsuite';
+import { fetchWeatherData } from './api/client';
+import SearchBar from './components/searchBar';
+import WeatherDisplay from './components/weatherDisplay';
 
 function App() {
-  const url = "https://api.open-meteo.com/v1/forecast";
+	const [weatherData, setWeatherData] = useState<any>();
+	const [isLoading, setIsLoading] = useState(false);
+	const [isError, setIsError] = useState(false);
 
-  const [coordinates, setCoordinates] = useState("");
-  const [weatherData, setWeatherData] = useState<any>();
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
+	const handleSearch = async (searchKeyword: string) => {
+		setIsLoading(true);
+		try {
+			const response = await fetchWeatherData({
+				latitude: searchKeyword.split(',')[0],
+				longitude: searchKeyword.split(',')[1],
+				current: ['temperature_2m', 'relative_humidity_2m', 'wind_speed_10m'],
+			});
 
-  const handleSubmit = async () => {
-    setIsLoading(true);
-    try {
-      const responses = await fetchWeatherApi(url, {
-        latitude: coordinates?.split(/\s*,\s*/)[0],
-        longitude: coordinates?.split(/\s*,\s*/)[1],
-        current: ["temperature_2m", "relative_humidity_2m", "wind_speed_10m"],
-      });
+			setWeatherData(response);
+		} catch (error) {
+			console.error(error);
+			setIsError(true);
+		} finally {
+			setIsLoading(false);
+		}
+	};
 
-      const response = responses[0];
-
-      const current = response.current();
-
-      setWeatherData({
-        current: {
-          temperature: current?.variables(0)?.value(),
-          relativeHumidity: current?.variables(1)?.value(),
-          windSpeed: current?.variables(2)?.value(),
-        },
-      });
-      setIsError(false);
-    } catch (error) {
-      setIsError(true);
-      setWeatherData(undefined);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <Container>
-      <Content>
-        <Stack
-          alignItems="center"
-          justifyContent="center"
-          style={{ height: "100%" }}
-        >
-          <Panel header="Weather App" bordered style={{ width: 400 }}>
-            <Form fluid>
-              <Form.Group>
-                <Form.ControlLabel>Coordinates</Form.ControlLabel>
-                <Form.Control
-                  name="coordinates"
-                  onChange={(value) => setCoordinates(value)}
-                  value={coordinates || ""}
-                  placeholder="Enter coordinates (latitude,longitude)"
-                />
-              </Form.Group>
-              <VStack spacing={8}>
-                <Button
-                  appearance="primary"
-                  block
-                  onClick={handleSubmit}
-                  disabled={isLoading}
-                >
-                  Submit
-                </Button>
-              </VStack>
-            </Form>
-            {isError && (
-              <>
-                <Divider />
-                <HStack alignItems="center" justifyContent="center">
-                  <Heading level={4}>Error, try again</Heading>
-                </HStack>
-              </>
-            )}
-            {weatherData && (
-              <>
-                <Divider />
-                <HStack alignItems="center" justifyContent="center">
-                  <Heading level={2}>
-                    {weatherData.current.temperature
-                      ? `${weatherData.current.temperature.toFixed(1)}  C`
-                      : ""}
-                  </Heading>
-                </HStack>
-                <HStack alignItems="center" justifyContent="space-between">
-                  <VStack alignItems="center" justifyContent="center">
-                    <Heading level={3}>
-                      {`${weatherData.current.relativeHumidity?.toFixed(1)}%`}
-                    </Heading>
-                    <Text>Humidity</Text>
-                  </VStack>
-                  <VStack alignItems="center" justifyContent="center">
-                    <Heading level={3}>
-                      {`${weatherData.current.windSpeed?.toFixed(1)} km/h`}
-                    </Heading>
-                    <Text>Wind Speed</Text>
-                  </VStack>
-                </HStack>
-              </>
-            )}
-          </Panel>
-        </Stack>
-      </Content>
-    </Container>
-  );
+	return (
+		<Container>
+			<Stack alignItems="center" justifyContent="center">
+				<Panel
+					header="Weather App"
+					bordered
+					style={{ width: '100%', minWidth: 576 }}
+				>
+					<SearchBar onSearch={handleSearch} />
+					{isLoading ? (
+						<>
+							<Divider />
+							<p>Loading...</p>
+						</>
+					) : isError ? (
+						<>
+							<Divider />
+							<p>Error loading weather data</p>
+						</>
+					) : weatherData ? (
+						<>
+							<Divider />
+							<WeatherDisplay weatherData={weatherData} />
+						</>
+					) : null}
+				</Panel>
+			</Stack>
+			<Stack
+				alignItems="center"
+				justifyContent="center"
+				style={{ marginTop: '20px' }}
+			>
+				<Text size="sm">
+					Weather data provided by{' '}
+					<a
+						href="https://open-meteo.com/"
+						target="_blank"
+						rel="noreferrer noopener"
+					>
+						Open-Meteo
+					</a>{' '}
+					and location data provided by{' '}
+					<a
+						href="https://nominatim.openstreetmap.org/"
+						target="_blank"
+						rel="noreferrer noopener"
+					>
+						OpenStreetMap Nominatim
+					</a>
+					.
+				</Text>
+			</Stack>
+		</Container>
+	);
 }
 
 export default App;
