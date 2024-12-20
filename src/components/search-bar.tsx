@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import { SelectPicker } from 'rsuite';
-import { fetchLocationData } from '../api/client';
+import debounce from 'debounce';
+import { getLocationData } from '@/lib/location-api';
 
 interface SearchBarProps {
 	onSearch: (value: string) => void;
@@ -12,31 +13,33 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
 		[]
 	);
 
-	const handleInputChange = useCallback(
-		async (value: string) => {
-			if (value !== inputValue) {
-				setInputValue(value);
+	const handleInputChange = debounce(
+		useCallback(
+			async (value: string) => {
+				if (value !== inputValue) {
+					setInputValue(value);
 
-				if (value.length > 2) {
-					try {
-						const response = await fetchLocationData(value);
-						const data = response.map(
-							(item: { display_name: string; lat: string; lon: string }) => ({
-								label: item.display_name,
-								value: item.lat + ',' + item.lon,
-							})
-						);
+					if (value.length > 2) {
+						try {
+							const response = await getLocationData(value);
+							const data = response.map(
+								(item: { display_name: string; lat: string; lon: string }) => ({
+									label: item.display_name,
+									value: item.lat + ',' + item.lon,
+								})
+							);
 
-						setOptions(data);
-					} catch (error) {
-						console.error(error);
+							setOptions(data);
+						} catch (error) {
+							console.error(error);
+						}
 					}
 				}
-			}
-		},
-		[inputValue]
+			},
+			[inputValue]
+		),
+		1000
 	);
-
 	const handleSelect = useCallback(
 		(value: string) => {
 			if (value) {

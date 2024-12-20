@@ -3,3 +3,7 @@ export type WeatherOptions = {
 	longitude: string;
 	current: string[];
 };
+
+export type LocationOptions = {
+	location: string;
+};

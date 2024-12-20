@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Container, Divider, Panel, Stack, Text } from 'rsuite';
-import { fetchWeatherData } from '@/api/client';
+import { getWeatherData } from '@/lib/weather-api';
 import { SearchBar } from '@/components/search-bar';
 import { WeatherDisplay } from '@/components/weather-display';
 
@@ -12,7 +12,7 @@ export const App = () => {
 	const handleSearch = async (searchKeyword: string) => {
 		setIsLoading(true);
 		try {
-			const response = await fetchWeatherData({
+			const response = await getWeatherData({
 				latitude: searchKeyword.split(',')[0],
 				longitude: searchKeyword.split(',')[1],
 				current: ['temperature_2m', 'relative_humidity_2m', 'wind_speed_10m'],
