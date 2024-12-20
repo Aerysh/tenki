@@ -1,8 +1,7 @@
 export default {
-  printWidth: 80,
-  semi: true,
-  singleQuote: true,
-  tabWidth: 2,
-  trailingComma: "es5",
-  useTabs: true,
+	singleQuote: true,
+	trailingComma: 'all',
+	printWidth: 80,
+	tabWidth: 2,
+	useTabs: false,
 };
